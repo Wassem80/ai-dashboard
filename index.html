@@ -5,94 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   <style>
-    body {
-      font-family: Arial;
-      background: #0f172a;
-      color: #e2e8f0;
-      margin: 20px;
+    body { font-family: Arial; background: #0f172a; color: #e2e8f0; margin:20px; }
+    table { width:100%; border-collapse: collapse; margin-top:20px; }
+    th, td { padding:10px; text-align:center; }
+    th { background:#1e293b; }
+    tr:nth-child(even){ background:#1e293b; }
+
+    .buy { background:#065f46; }
+    .build { background:#92400e; }
+    .watch { background:#7f1d1d; }
+
+    .green { color:#16a34a; }
+    .red { color:#dc2626; }
+
+    select, input, button {
+      padding:6px;
+      border-radius:6px;
+      border:none;
     }
-
-    h1 {
-      text-align: center;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      padding: 10px;
-      text-align: center;
-    }
-
-    th {
-      background: #1e293b;
-    }
-
-    tr:nth-child(even) {
-      background: #1e293b;
-    }
-
-    .buy { background-color: #065f46; }
-    .build { background-color: #92400e; }
-    .watch { background-color: #7f1d1d; }
-
-    .green { color: #16a34a; }
-    .red { color: #dc2626; }
-
-    .badge {
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      margin: 5px;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
   </style>
 </head>
 
 <body>
 
-<div class="header">
-  <h1>📊 AI Investment Dashboard</h1>
-  <div>
-    <span class="badge buy">BUY ≥ 4.2</span>
-    <span class="badge build">BUILD ≥ 3.8</span>
-    <span class="badge watch">WATCH</span>
-  </div>
+<h1>📊 AI Investment Dashboard</h1>
+
+<!-- FILTERS -->
+<div style="margin:20px 0; display:flex; gap:10px; flex-wrap:wrap;">
+  <select id="filterOwned">
+    <option value="ALL">All</option>
+    <option value="OWNED">Owned</option>
+    <option value="WATCH">Watchlist</option>
+  </select>
+
+  <select id="filterStatus">
+    <option value="ALL">All Status</option>
+    <option value="BUY">BUY</option>
+    <option value="BUILD">BUILD</option>
+    <option value="WATCH">WATCH</option>
+  </select>
+
+  <select id="filterPnL">
+    <option value="ALL">All P&L</option>
+    <option value="GAIN">Winners</option>
+    <option value="LOSS">Losers</option>
+  </select>
+
+  <input id="minScore" type="number" step="0.1" placeholder="Min Score"/>
+
+  <select id="sortBy">
+    <option value="score">Sort by Score</option>
+    <option value="pnl">Sort by P&L</option>
+    <option value="value">Sort by Value</option>
+  </select>
+
+  <button onclick="render()">Apply</button>
+</div>
+
+<!-- SUMMARY -->
+<div id="summary" style="margin:20px 0; display:flex; gap:20px; flex-wrap:wrap;">
+  <div>Total Value: <b id="totalValue">-</b></div>
+  <div>Invested: <b id="totalCost">-</b></div>
+  <div>P&L: <b id="totalPnL">-</b></div>
+  <div>P&L %: <b id="totalPnLPct">-</b></div>
 </div>
 
 <table id="stockTable">
-  <thead>
-    <tr>
-      <th>Ticker</th>
-      <th>Type</th>
-      <th>Price</th>
-      <th>% Change</th>
-      <th>Qty</th>
-      <th>Avg</th>
-      <th>Value</th>
-      <th>P&L %</th>
-      <th>Score</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
+<thead>
+<tr>
+<th>Ticker</th>
+<th>Type</th>
+<th>Price</th>
+<th>% Change</th>
+<th>Qty</th>
+<th>Avg</th>
+<th>Value</th>
+<th>P&L</th>
+<th>Score</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody></tbody>
 </table>
 
 <script>
 
-// ===== CONSOLIDATED PORTFOLIO =====
+// ===== DATA =====
 const stocks = [
-
-  // ===== CORE =====
   {ticker:"AMZN", owned:true, qty:790, avg:158, F:5,N:5,M:3,OL:5,O:4},
   {ticker:"AAPL", owned:true, qty:400, avg:87.7, F:4,N:3,M:2,OL:5,O:3},
   {ticker:"PANW", owned:true, qty:2600, avg:159, F:5,N:4,M:3,OL:5,O:3},
@@ -101,13 +100,11 @@ const stocks = [
   {ticker:"INTC", owned:true, qty:2000, avg:22, F:3,N:3,M:3,OL:3,O:3},
   {ticker:"NVO", owned:true, qty:6000, avg:48, F:5,N:2,M:2,OL:5,O:2},
 
-  // ===== MID =====
   {ticker:"U", owned:true, qty:1250, avg:60, F:3,N:4,M:5,OL:2,O:4},
   {ticker:"IONQ", owned:true, qty:1500, avg:30.5, F:2,N:5,M:5,OL:1,O:5},
   {ticker:"RXRX", owned:true, qty:35000, avg:4.1, F:2,N:4,M:5,OL:2,O:5},
   {ticker:"HIMS", owned:true, qty:5000, avg:16.1, F:3,N:3,M:3,OL:3,O:3},
 
-  // ===== HIGH RISK =====
   {ticker:"VUZI", owned:true, qty:38500, avg:3.3, F:2,N:3,M:5,OL:2,O:3},
   {ticker:"LCTX", owned:true, qty:41000, avg:0.9, F:2,N:3,M:5,OL:2,O:4},
   {ticker:"CLOV", owned:true, qty:5500, avg:11.5, F:2,N:3,M:5,OL:2,O:3},
@@ -115,12 +112,10 @@ const stocks = [
   {ticker:"NIO", owned:true, qty:500, avg:36.5, F:2,N:3,M:4,OL:2,O:3},
   {ticker:"BYND", owned:true, qty:120, avg:71.2, F:1,N:2,M:5,OL:1,O:2},
 
-  // ===== CYCLICAL =====
   {ticker:"BA", owned:true, qty:765, avg:170, F:3,N:2,M:3,OL:3,O:2},
   {ticker:"UBER", owned:true, qty:400, avg:23.3, F:4,N:3,M:3,OL:4,O:3},
   {ticker:"NCLH", owned:true, qty:3000, avg:16.2, F:3,N:2,M:3,OL:3,O:2},
 
-  // ===== WATCHLIST =====
   {ticker:"AMD", owned:false, qty:0, avg:0, F:5,N:5,M:4,OL:4,O:4},
   {ticker:"SNOW", owned:false, qty:0, avg:0, F:4,N:5,M:5,OL:3,O:5},
   {ticker:"DDOG", owned:false, qty:0, avg:0, F:4,N:5,M:4,OL:4,O:4},
@@ -128,77 +123,110 @@ const stocks = [
   {ticker:"TSLA", owned:false, qty:0, avg:0, F:3,N:5,M:3,OL:3,O:5}
 ];
 
-// ===== SCORING =====
-function calculateScore(s) {
+// ===== LOGIC =====
+function calculateScore(s){
   return (s.F*0.3 + s.N*0.2 + s.M*0.2 + s.OL*0.2 + s.O*0.1);
 }
 
-function getStatus(score) {
-  if (score >= 4.2) return "BUY";
-  if (score >= 3.8) return "BUILD";
+function getStatus(score){
+  if(score>=4.2) return "BUY";
+  if(score>=3.8) return "BUILD";
   return "WATCH";
 }
 
-// ===== FETCH PRICES =====
-async function fetchPrices() {
-  try {
-    const symbols = stocks.map(s => s.ticker).join(",");
-    const res = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`);
-    const data = await res.json();
+// ===== FETCH =====
+async function fetchPrices(){
+  const symbols = stocks.map(s=>s.ticker).join(",");
+  const res = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`);
+  const data = await res.json();
 
-    let map = {};
-    data.quoteResponse.result.forEach(s => {
-      map[s.symbol] = {
-        price: s.regularMarketPrice,
-        change: s.regularMarketChangePercent
-      };
-    });
+  let map = {};
+  data.quoteResponse.result.forEach(s=>{
+    map[s.symbol] = {
+      price: s.regularMarketPrice,
+      change: s.regularMarketChangePercent
+    };
+  });
 
-    return map;
-
-  } catch {
-    return {};
-  }
+  return map;
 }
 
 // ===== RENDER =====
-async function render() {
+async function render(){
+
   const tbody = document.querySelector("#stockTable tbody");
   tbody.innerHTML = "";
 
   const prices = await fetchPrices();
 
-  stocks.sort((a,b) => calculateScore(b) - calculateScore(a));
+  let totalValue = 0;
+  let totalCost = 0;
 
-  stocks.forEach(s => {
+  let filterOwned = document.getElementById("filterOwned").value;
+  let filterStatus = document.getElementById("filterStatus").value;
+  let filterPnL = document.getElementById("filterPnL").value;
+  let minScore = parseFloat(document.getElementById("minScore").value) || 0;
+  let sortBy = document.getElementById("sortBy").value;
+
+  let processed = stocks.map(s=>{
+    let price = prices[s.ticker]?.price || 0;
+    let value = s.qty * price;
+    let cost = s.qty * s.avg;
+    let pnl = value - cost;
+    let pnlPct = s.avg ? ((price - s.avg)/s.avg)*100 : 0;
     let score = calculateScore(s);
     let status = getStatus(score);
 
-    let p = prices[s.ticker]?.price || 0;
-    let change = prices[s.ticker]?.change || 0;
+    return {...s, price, value, cost, pnl, pnlPct, score, status};
+  });
 
-    let value = s.qty * p;
-    let pnl = s.avg ? ((p - s.avg) / s.avg) * 100 : 0;
+  // FILTERS
+  processed = processed.filter(s=>{
+    if(filterOwned==="OWNED" && !s.owned) return false;
+    if(filterOwned==="WATCH" && s.owned) return false;
+    if(filterStatus!=="ALL" && s.status!==filterStatus) return false;
+    if(filterPnL==="GAIN" && s.pnl<=0) return false;
+    if(filterPnL==="LOSS" && s.pnl>=0) return false;
+    if(s.score < minScore) return false;
+    return true;
+  });
 
-    let type = s.owned ? "📦 Owned" : "👀 Watch";
+  // SORT
+  if(sortBy==="score") processed.sort((a,b)=>b.score-a.score);
+  if(sortBy==="pnl") processed.sort((a,b)=>b.pnl-a.pnl);
+  if(sortBy==="value") processed.sort((a,b)=>b.value-a.value);
+
+  // RENDER
+  processed.forEach(s=>{
+    if(s.owned){
+      totalValue += s.value;
+      totalCost += s.cost;
+    }
 
     let row = `
-      <tr class="${status.toLowerCase()}">
+      <tr class="${s.status.toLowerCase()}">
         <td>${s.ticker}</td>
-        <td>${type}</td>
-        <td>$${p.toFixed(2)}</td>
-        <td class="${change>=0?'green':'red'}">${change.toFixed(2)}%</td>
+        <td>${s.owned ? "📦" : "👀"}</td>
+        <td>$${s.price.toFixed(2)}</td>
+        <td class="${s.pnl>=0?'green':'red'}">${s.pnlPct.toFixed(1)}%</td>
         <td>${s.qty}</td>
         <td>$${s.avg}</td>
-        <td>$${value.toFixed(0)}</td>
-        <td class="${pnl>=0?'green':'red'}">${pnl.toFixed(1)}%</td>
-        <td>${score.toFixed(2)}</td>
-        <td>${status}</td>
+        <td>$${s.value.toFixed(0)}</td>
+        <td class="${s.pnl>=0?'green':'red'}">$${s.pnl.toFixed(0)}</td>
+        <td>${s.score.toFixed(2)}</td>
+        <td>${s.status}</td>
       </tr>
     `;
-
     tbody.innerHTML += row;
   });
+
+  let totalPnL = totalValue - totalCost;
+  let totalPct = totalCost ? (totalPnL/totalCost)*100 : 0;
+
+  document.getElementById("totalValue").innerText = "$"+totalValue.toFixed(0);
+  document.getElementById("totalCost").innerText = "$"+totalCost.toFixed(0);
+  document.getElementById("totalPnL").innerText = "$"+totalPnL.toFixed(0);
+  document.getElementById("totalPnLPct").innerText = totalPct.toFixed(2)+"%";
 }
 
 render();
