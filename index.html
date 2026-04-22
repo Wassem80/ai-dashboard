@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
+  <title>AI Investment Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Investing Dashboard</title>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       background: #0f172a;
       color: #e2e8f0;
       margin: 20px;
@@ -24,7 +23,7 @@
     }
 
     th, td {
-      padding: 12px;
+      padding: 10px;
       text-align: center;
     }
 
@@ -36,17 +35,18 @@
       background: #1e293b;
     }
 
-    .buy {
-      background-color: #065f46 !important;
-      font-weight: bold;
-    }
+    .buy { background-color: #065f46; }
+    .build { background-color: #92400e; }
+    .watch { background-color: #7f1d1d; }
 
-    .build {
-      background-color: #92400e !important;
-    }
+    .green { color: #16a34a; }
+    .red { color: #dc2626; }
 
-    .watch {
-      background-color: #7f1d1d !important;
+    .badge {
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin: 5px;
     }
 
     .header {
@@ -55,27 +55,17 @@
       align-items: center;
     }
 
-    .badge {
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-    }
-
-    .green { background: #065f46; }
-    .orange { background: #92400e; }
-    .red { background: #7f1d1d; }
-
   </style>
 </head>
 
 <body>
 
 <div class="header">
-  <h1>📊 AI Investing Dashboard</h1>
+  <h1>📊 AI Investment Dashboard</h1>
   <div>
-    <span class="badge green">BUY ≥ 4.2</span>
-    <span class="badge orange">BUILD ≥ 3.8</span>
-    <span class="badge red">WATCH</span>
+    <span class="badge buy">BUY ≥ 4.2</span>
+    <span class="badge build">BUILD ≥ 3.8</span>
+    <span class="badge watch">WATCH</span>
   </div>
 </div>
 
@@ -83,12 +73,14 @@
   <thead>
     <tr>
       <th>Ticker</th>
-      <th>F</th>
-      <th>N</th>
-      <th>M</th>
-      <th>OL</th>
-      <th>O</th>
-      <th>Total Score</th>
+      <th>Type</th>
+      <th>Price</th>
+      <th>% Change</th>
+      <th>Qty</th>
+      <th>Avg</th>
+      <th>Value</th>
+      <th>P&L %</th>
+      <th>Score</th>
       <th>Status</th>
     </tr>
   </thead>
@@ -97,19 +89,46 @@
 
 <script>
 
-// ===== STOCK DATA (EDIT HERE) =====
+// ===== CONSOLIDATED PORTFOLIO =====
 const stocks = [
-  {ticker: "AMD", F:5, N:5, M:4, OL:4, O:4},
-  {ticker: "SNOW", F:4, N:5, M:5, OL:3, O:5},
-  {ticker: "DDOG", F:4, N:5, M:4, OL:4, O:4},
-  {ticker: "CRWD", F:4, N:4, M:3, OL:4, O:4},
-  {ticker: "ARM", F:4, N:5, M:3, OL:4, O:4},
-  {ticker: "NOW", F:5, N:4, M:2, OL:5, O:3},
-  {ticker: "U", F:3, N:4, M:5, OL:2, O:4},
-  {ticker: "TSLA", F:3, N:5, M:3, OL:3, O:5}
+
+  // ===== CORE =====
+  {ticker:"AMZN", owned:true, qty:790, avg:158, F:5,N:5,M:3,OL:5,O:4},
+  {ticker:"AAPL", owned:true, qty:400, avg:87.7, F:4,N:3,M:2,OL:5,O:3},
+  {ticker:"PANW", owned:true, qty:2600, avg:159, F:5,N:4,M:3,OL:5,O:3},
+  {ticker:"NOW", owned:true, qty:2000, avg:127.5, F:5,N:4,M:2,OL:5,O:3},
+  {ticker:"CRWD", owned:true, qty:550, avg:73.5, F:5,N:4,M:3,OL:5,O:3},
+  {ticker:"INTC", owned:true, qty:2000, avg:22, F:3,N:3,M:3,OL:3,O:3},
+  {ticker:"NVO", owned:true, qty:6000, avg:48, F:5,N:2,M:2,OL:5,O:2},
+
+  // ===== MID =====
+  {ticker:"U", owned:true, qty:1250, avg:60, F:3,N:4,M:5,OL:2,O:4},
+  {ticker:"IONQ", owned:true, qty:1500, avg:30.5, F:2,N:5,M:5,OL:1,O:5},
+  {ticker:"RXRX", owned:true, qty:35000, avg:4.1, F:2,N:4,M:5,OL:2,O:5},
+  {ticker:"HIMS", owned:true, qty:5000, avg:16.1, F:3,N:3,M:3,OL:3,O:3},
+
+  // ===== HIGH RISK =====
+  {ticker:"VUZI", owned:true, qty:38500, avg:3.3, F:2,N:3,M:5,OL:2,O:3},
+  {ticker:"LCTX", owned:true, qty:41000, avg:0.9, F:2,N:3,M:5,OL:2,O:4},
+  {ticker:"CLOV", owned:true, qty:5500, avg:11.5, F:2,N:3,M:5,OL:2,O:3},
+  {ticker:"SPCE", owned:true, qty:225, avg:6, F:1,N:3,M:5,OL:1,O:4},
+  {ticker:"NIO", owned:true, qty:500, avg:36.5, F:2,N:3,M:4,OL:2,O:3},
+  {ticker:"BYND", owned:true, qty:120, avg:71.2, F:1,N:2,M:5,OL:1,O:2},
+
+  // ===== CYCLICAL =====
+  {ticker:"BA", owned:true, qty:765, avg:170, F:3,N:2,M:3,OL:3,O:2},
+  {ticker:"UBER", owned:true, qty:400, avg:23.3, F:4,N:3,M:3,OL:4,O:3},
+  {ticker:"NCLH", owned:true, qty:3000, avg:16.2, F:3,N:2,M:3,OL:3,O:2},
+
+  // ===== WATCHLIST =====
+  {ticker:"AMD", owned:false, qty:0, avg:0, F:5,N:5,M:4,OL:4,O:4},
+  {ticker:"SNOW", owned:false, qty:0, avg:0, F:4,N:5,M:5,OL:3,O:5},
+  {ticker:"DDOG", owned:false, qty:0, avg:0, F:4,N:5,M:4,OL:4,O:4},
+  {ticker:"ARM", owned:false, qty:0, avg:0, F:4,N:5,M:3,OL:4,O:4},
+  {ticker:"TSLA", owned:false, qty:0, avg:0, F:3,N:5,M:3,OL:3,O:5}
 ];
 
-// ===== CALCULATIONS =====
+// ===== SCORING =====
 function calculateScore(s) {
   return (s.F*0.3 + s.N*0.2 + s.M*0.2 + s.OL*0.2 + s.O*0.1);
 }
@@ -120,26 +139,59 @@ function getStatus(score) {
   return "WATCH";
 }
 
+// ===== FETCH PRICES =====
+async function fetchPrices() {
+  try {
+    const symbols = stocks.map(s => s.ticker).join(",");
+    const res = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`);
+    const data = await res.json();
+
+    let map = {};
+    data.quoteResponse.result.forEach(s => {
+      map[s.symbol] = {
+        price: s.regularMarketPrice,
+        change: s.regularMarketChangePercent
+      };
+    });
+
+    return map;
+
+  } catch {
+    return {};
+  }
+}
+
 // ===== RENDER =====
-function renderTable() {
+async function render() {
   const tbody = document.querySelector("#stockTable tbody");
   tbody.innerHTML = "";
 
-  // Sort by score descending
-  stocks.sort((a, b) => calculateScore(b) - calculateScore(a));
+  const prices = await fetchPrices();
+
+  stocks.sort((a,b) => calculateScore(b) - calculateScore(a));
 
   stocks.forEach(s => {
     let score = calculateScore(s);
     let status = getStatus(score);
 
+    let p = prices[s.ticker]?.price || 0;
+    let change = prices[s.ticker]?.change || 0;
+
+    let value = s.qty * p;
+    let pnl = s.avg ? ((p - s.avg) / s.avg) * 100 : 0;
+
+    let type = s.owned ? "📦 Owned" : "👀 Watch";
+
     let row = `
       <tr class="${status.toLowerCase()}">
         <td>${s.ticker}</td>
-        <td>${s.F}</td>
-        <td>${s.N}</td>
-        <td>${s.M}</td>
-        <td>${s.OL}</td>
-        <td>${s.O}</td>
+        <td>${type}</td>
+        <td>$${p.toFixed(2)}</td>
+        <td class="${change>=0?'green':'red'}">${change.toFixed(2)}%</td>
+        <td>${s.qty}</td>
+        <td>$${s.avg}</td>
+        <td>$${value.toFixed(0)}</td>
+        <td class="${pnl>=0?'green':'red'}">${pnl.toFixed(1)}%</td>
         <td>${score.toFixed(2)}</td>
         <td>${status}</td>
       </tr>
@@ -149,7 +201,7 @@ function renderTable() {
   });
 }
 
-renderTable();
+render();
 
 </script>
 
