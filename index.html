@@ -5,23 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   <style>
-    body { font-family: Arial; background:#0f172a; color:#e2e8f0; margin:20px;}
-    table { width:100%; border-collapse: collapse; margin-top:20px;}
-    th, td { padding:10px; text-align:center;}
-    th { background:#1e293b;}
-    tr:nth-child(even){ background:#1e293b;}
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: #e2e8f0;
+      margin: 20px;
+    }
 
-    .buy { background:#065f46; }
-    .build { background:#92400e; }
-    .watch { background:#7f1d1d; }
+    h1 {
+      text-align: center;
+    }
 
-    .green { color:#16a34a; }
-    .red { color:#dc2626; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-    select, input, button {
-      padding:6px;
-      border-radius:6px;
-      border:none;
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #1e293b;
+    }
+
+    tr:nth-child(even) {
+      background: #1e293b;
+    }
+
+    .green { color: #16a34a; }
+    .red { color: #dc2626; }
+
+    select, button {
+      padding: 6px;
+      border-radius: 6px;
+      border: none;
     }
   </style>
 </head>
@@ -30,35 +50,13 @@
 
 <h1>📊 AI Investment Dashboard</h1>
 
-<!-- FILTERS -->
-<div style="margin:20px 0; display:flex; gap:10px; flex-wrap:wrap;">
-  <select id="filterOwned">
+<!-- FILTER -->
+<div style="margin:20px 0;">
+  <select id="filter">
     <option value="ALL">All</option>
-    <option value="OWNED">Owned</option>
-    <option value="WATCH">Watchlist</option>
-  </select>
-
-  <select id="filterStatus">
-    <option value="ALL">All Status</option>
-    <option value="BUY">BUY</option>
-    <option value="BUILD">BUILD</option>
-    <option value="WATCH">WATCH</option>
-  </select>
-
-  <select id="filterPnL">
-    <option value="ALL">All P&L</option>
-    <option value="GAIN">Winners</option>
+    <option value="WIN">Winners</option>
     <option value="LOSS">Losers</option>
   </select>
-
-  <input id="minScore" type="number" step="0.1" placeholder="Min Score"/>
-
-  <select id="sortBy">
-    <option value="score">Sort by Score</option>
-    <option value="pnl">Sort by P&L</option>
-    <option value="value">Sort by Value</option>
-  </select>
-
   <button onclick="render()">Apply</button>
 </div>
 
@@ -74,15 +72,11 @@
 <thead>
 <tr>
 <th>Ticker</th>
-<th>Type</th>
 <th>Price</th>
-<th>%</th>
 <th>Qty</th>
 <th>Avg</th>
 <th>Value</th>
 <th>P&L</th>
-<th>Score</th>
-<th>Status</th>
 </tr>
 </thead>
 <tbody></tbody>
@@ -92,120 +86,91 @@
 
 // ===== PORTFOLIO =====
 const stocks = [
-  {ticker:"AMZN", owned:true, qty:790, avg:158, F:5,N:5,M:3,OL:5,O:4},
-  {ticker:"AAPL", owned:true, qty:400, avg:87.7, F:4,N:3,M:2,OL:5,O:3},
-  {ticker:"PANW", owned:true, qty:2600, avg:159, F:5,N:4,M:3,OL:5,O:3},
-  {ticker:"NOW", owned:true, qty:2000, avg:127.5, F:5,N:4,M:2,OL:5,O:3},
-  {ticker:"CRWD", owned:true, qty:550, avg:73.5, F:5,N:4,M:3,OL:5,O:3},
-  {ticker:"INTC", owned:true, qty:2000, avg:22, F:3,N:3,M:3,OL:3,O:3},
-  {ticker:"NVO", owned:true, qty:6000, avg:48, F:5,N:2,M:2,OL:5,O:2},
+  {ticker:"AMZN", qty:790, avg:158},
+  {ticker:"AAPL", qty:400, avg:87.7},
+  {ticker:"PANW", qty:2600, avg:159},
+  {ticker:"NOW", qty:2000, avg:127.5},
+  {ticker:"CRWD", qty:550, avg:73.5},
+  {ticker:"INTC", qty:2000, avg:22},
+  {ticker:"NVO", qty:6000, avg:48},
 
-  {ticker:"U", owned:true, qty:1250, avg:60, F:3,N:4,M:5,OL:2,O:4},
-  {ticker:"IONQ", owned:true, qty:1500, avg:30.5, F:2,N:5,M:5,OL:1,O:5},
-  {ticker:"RXRX", owned:true, qty:35000, avg:4.1, F:2,N:4,M:5,OL:2,O:5},
-  {ticker:"HIMS", owned:true, qty:5000, avg:16.1, F:3,N:3,M:3,OL:3,O:3},
+  {ticker:"U", qty:1250, avg:60},
+  {ticker:"IONQ", qty:1500, avg:30.5},
+  {ticker:"RXRX", qty:35000, avg:4.1},
+  {ticker:"HIMS", qty:5000, avg:16.1},
 
-  {ticker:"VUZI", owned:true, qty:38500, avg:3.3},
-  {ticker:"LCTX", owned:true, qty:41000, avg:0.9},
-  {ticker:"CLOV", owned:true, qty:5500, avg:11.5},
-  {ticker:"SPCE", owned:true, qty:225, avg:6},
-  {ticker:"NIO", owned:true, qty:500, avg:36.5},
-  {ticker:"BYND", owned:true, qty:120, avg:71.2},
+  {ticker:"VUZI", qty:38500, avg:3.3},
+  {ticker:"LCTX", qty:41000, avg:0.9},
+  {ticker:"CLOV", qty:5500, avg:11.5},
+  {ticker:"SPCE", qty:225, avg:6},
+  {ticker:"NIO", qty:500, avg:36.5},
+  {ticker:"BYND", qty:120, avg:71.2},
 
-  {ticker:"BA", owned:true, qty:765, avg:170},
-  {ticker:"UBER", owned:true, qty:400, avg:23.3},
-  {ticker:"NCLH", owned:true, qty:3000, avg:16.2},
-
-  {ticker:"AMD", owned:false},
-  {ticker:"SNOW", owned:false},
-  {ticker:"DDOG", owned:false},
-  {ticker:"ARM", owned:false},
-  {ticker:"TSLA", owned:false}
+  {ticker:"BA", qty:765, avg:170},
+  {ticker:"UBER", qty:400, avg:23.3},
+  {ticker:"NCLH", qty:3000, avg:16.2}
 ];
 
-// ===== FALLBACK PRICES =====
-const fallback = {
+// ===== STATIC PRICES (SAFE BASELINE) =====
+const prices = {
   AMZN:251, AAPL:267, PANW:176, NOW:101, CRWD:116,
   INTC:66, NVO:39, U:25, IONQ:47, RXRX:3.6,
   HIMS:30, VUZI:2.5, LCTX:1.6, CLOV:2.4,
-  SPCE:2.9, NIO:6.4, BYND:1.0, BA:221,
-  UBER:77, NCLH:19.5
+  SPCE:2.9, NIO:6.4, BYND:1.0,
+  BA:221, UBER:77, NCLH:19.5
 };
 
-// ===== FETCH =====
-async function fetchPrices(){
-  try{
-    const symbols = stocks.map(s=>s.ticker).join(",");
-    const res = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols}`);
-    const data = await res.json();
-
-    let map = {};
-    data.quoteResponse.result.forEach(s=>{
-      map[s.symbol] = s.regularMarketPrice;
-    });
-
-    return map;
-
-  } catch {
-    console.log("Using fallback prices");
-    return fallback;
-  }
-}
-
 // ===== RENDER =====
-async function render(){
+function render(){
 
   const tbody = document.querySelector("#stockTable tbody");
   tbody.innerHTML = "";
 
-  const prices = await fetchPrices();
-
   let totalValue = 0;
   let totalCost = 0;
 
-  stocks.forEach(s=>{
+  let filter = document.getElementById("filter").value;
+
+  stocks.forEach(s => {
 
     let price = prices[s.ticker] || 0;
-    let qty = s.qty || 0;
-    let avg = s.avg || 0;
-
-    let value = qty * price;
-    let cost = qty * avg;
+    let value = s.qty * price;
+    let cost = s.qty * s.avg;
     let pnl = value - cost;
-    let pct = avg ? ((price-avg)/avg)*100 : 0;
+    let pct = ((price - s.avg) / s.avg) * 100;
 
-    if(s.owned){
-      totalValue += value;
-      totalCost += cost;
-    }
+    if (filter === "WIN" && pnl <= 0) return;
+    if (filter === "LOSS" && pnl >= 0) return;
+
+    totalValue += value;
+    totalCost += cost;
 
     let row = `
       <tr>
         <td>${s.ticker}</td>
-        <td>${s.owned ? "📦" : "👀"}</td>
-        <td>${price ? "$"+price.toFixed(2) : "-"}</td>
-        <td>${pct ? pct.toFixed(1)+"%" : "-"}</td>
-        <td>${qty}</td>
-        <td>${avg}</td>
+        <td>$${price.toFixed(2)}</td>
+        <td>${s.qty}</td>
+        <td>$${s.avg}</td>
         <td>$${value.toFixed(0)}</td>
-        <td class="${pnl>=0?'green':'red'}">$${pnl.toFixed(0)}</td>
-        <td>-</td>
-        <td>-</td>
+        <td class="${pnl>=0?'green':'red'}">
+          $${pnl.toFixed(0)} (${pct.toFixed(1)}%)
+        </td>
       </tr>
     `;
 
     tbody.innerHTML += row;
   });
 
-  let pnl = totalValue - totalCost;
-  let pct = totalCost ? (pnl/totalCost)*100 : 0;
+  let totalPnL = totalValue - totalCost;
+  let totalPct = (totalPnL / totalCost) * 100;
 
   document.getElementById("totalValue").innerText = "$"+totalValue.toFixed(0);
   document.getElementById("totalCost").innerText = "$"+totalCost.toFixed(0);
-  document.getElementById("totalPnL").innerText = "$"+pnl.toFixed(0);
-  document.getElementById("totalPct").innerText = pct.toFixed(2)+"%";
+  document.getElementById("totalPnL").innerText = "$"+totalPnL.toFixed(0);
+  document.getElementById("totalPct").innerText = totalPct.toFixed(2)+"%";
 }
 
+// INIT
 render();
 
 </script>
